@@ -1,28 +1,34 @@
-import { MongoClient } from "mongodb";
 import express from "express";
-import "dotenv/config";
 import cors from "cors";
+import "dotenv/config";
+import { toNodeHandler } from "better-auth/node";
+import { auth, client } from "./auth.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// 1. Crucial CORS Update for Authentication Cookies
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Must exactly match your Next.js URL
+    credentials: true, // Required for secure cross-origin cookies
+  })
+);
 app.use(express.json());
 
-const client = new MongoClient(process.env.MONGODB_URI);
-
-export async function connectToMongoDB() {
+// 2. Connect to MongoDB
+async function connectToMongoDB() {
   try {
     await client.connect();
     console.log("You successfully connected to MongoDB!");
-    return client;
   } catch (err) {
     console.dir(err);
   }
 }
-
 connectToMongoDB();
+
+// 3. Mount BetterAuth API Routes
+app.use("/api/auth", toNodeHandler(auth));
 
 app.get("/", (req, res) => {
   res.send({ message: "Server is running perfectly!" });
