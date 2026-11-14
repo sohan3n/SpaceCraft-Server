@@ -5,6 +5,7 @@ import { toNodeHandler } from "better-auth/node";
 import { auth, client } from "./auth.js";
 import usersRouter from "./routes/users.js";
 import studiosRouter from "./routes/studios.js";
+import bookingsRouter from "./routes/bookings.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -36,6 +37,8 @@ app.use("/api/auth", toNodeHandler(auth));
 app.use("/api/users", usersRouter);
 
 app.use("/api/studios", studiosRouter);
+
+app.use("/api/bookings", bookingsRouter);
 
 app.get("/", (req, res) => {
   res.send({ message: "Server is running perfectly!" });
