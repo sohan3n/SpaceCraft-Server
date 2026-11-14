@@ -51,6 +51,29 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /api/studios/host/me - Protected endpoint to fetch logged-in host's own studios
+// Must stay ABOVE /:id so Express does not treat "host" as a studio ID
+router.get("/host/me", requireAuth, async (req, res) => {
+  try {
+    const studios = await studiosCollection
+      .find({ hostId: req.user.id })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      count: studios.length,
+      studios,
+    });
+  } catch (error) {
+    console.error("Error fetching host studios:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch your studio listings.",
+    });
+  }
+});
+
 // POST /api/studios - Protected endpoint for authenticated hosts to list a studio
 router.post("/", requireAuth, async (req, res) => {
   try {
@@ -160,6 +183,49 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch studio details.",
+    });
+  }
+});
+
+// DELETE /api/studios/:id - Protected endpoint for a host to delete their own studio
+router.delete("/:id", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid studio ID format.",
+      });
+    }
+
+    const studio = await studiosCollection.findOne({ _id: new ObjectId(id) });
+
+    if (!studio) {
+      return res.status(404).json({
+        success: false,
+        message: "Studio not found.",
+      });
+    }
+
+    if (studio.hostId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You can only delete your own studio listings.",
+      });
+    }
+
+    await studiosCollection.deleteOne({ _id: new ObjectId(id) });
+
+    res.status(200).json({
+      success: true,
+      message: "Studio deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting studio:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete studio.",
     });
   }
 });
