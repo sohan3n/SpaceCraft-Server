@@ -5,7 +5,7 @@ import "dotenv/config";
 
 // 1. Establish the shared MongoDB Connection
 export const client = new MongoClient(process.env.MONGODB_URI);
-export const db = client.db();
+export const db = client.db("SpaceCraft-database");
 
 // 2. Initialize BetterAuth
 export const auth = betterAuth({
@@ -13,4 +13,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true, // Enables standard email/password registration and login
   },
+  // 3. Google Social Provider (OAuth 2.0)
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    },
+  },
+  trustedOrigins: ["http://localhost:3000"],
 });
