@@ -9,6 +9,7 @@ export const db = client.db("SpaceCraft-database");
 
 // 2. Initialize BetterAuth
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
   database: mongodbAdapter(db),
   emailAndPassword: {
     enabled: true, // Enables standard email/password registration and login
