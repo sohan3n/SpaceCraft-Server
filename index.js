@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 // 1. Crucial CORS Update for Authentication Cookies
 app.use(
   cors({
-    origin: ["http://localhost:3000"], // Must exactly match your Next.js URL
+    origin: [process.env.CLIENT_URL], // Must exactly match your Next.js URL
     credentials: true, // Required for secure cross-origin cookies
   })
 );
