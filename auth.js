@@ -7,12 +7,15 @@ import "dotenv/config";
 export const client = new MongoClient(process.env.MONGODB_URI);
 export const db = client.db("SpaceCraft-database");
 
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+
 // 2. Initialize BetterAuth
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
   database: mongodbAdapter(db),
   emailAndPassword: {
-    enabled: true, // Enables standard email/password registration and login
+    enabled: true,
+    autoSignIn: false, // Ensures registration navigates cleanly to /login without auto-logging in
   },
   // 3. Google Social Provider (OAuth 2.0)
   socialProviders: {
@@ -25,7 +28,11 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
       trustedProviders: ["google"],
+      allowUnverifiedEmails: true,
     },
   },
-  trustedOrigins: ["http://localhost:3000"],
+  onAPIError: {
+    errorURL: `${FRONTEND_URL}/login`,
+  },
+  trustedOrigins: [FRONTEND_URL, "http://localhost:3000"],
 });

@@ -204,4 +204,51 @@ router.patch("/:id", requireAuth, async (req, res) => {
   }
 });
 
+// DELETE /api/bookings/:id - Protected endpoint to permanently remove a booking
+// (allowed for the renter who created it or the host who owns the studio)
+router.delete("/:id", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid booking ID format.",
+      });
+    }
+
+    const booking = await bookingsCollection.findOne({ _id: new ObjectId(id) });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found.",
+      });
+    }
+
+    const isRenter = booking.renterId === req.user.id;
+    const isHost = booking.hostId === req.user.id;
+
+    if (!isRenter && !isHost) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You do not have permission to delete this booking.",
+      });
+    }
+
+    await bookingsCollection.deleteOne({ _id: new ObjectId(id) });
+
+    res.status(200).json({
+      success: true,
+      message: "Booking deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete booking.",
+    });
+  }
+});
+
 export default router;

@@ -9,19 +9,27 @@ const studiosCollection = db.collection("studios");
 const DEFAULT_STUDIO_IMAGE =
   "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1200&q=80";
 
+// Escape user input before it is embedded in a RegExp literal, otherwise
+// characters like "(" or "[" in ?category= throw (or match too broadly).
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // GET /api/studios - Public catalog with optional category, search, and limit filters
 router.get("/", async (req, res) => {
+  // Never let browsers or Next.js cache filtered results — a cached response
+  // is exactly what makes category switches show the previous category's data.
+  res.set("Cache-Control", "no-store");
+
   try {
     const { category, search, limit } = req.query;
     const filter = {};
 
     if (category && category.toLowerCase() !== "all") {
-      filter.category = { $regex: new RegExp(`^${category.trim()}$`, "i") };
+      // Exact, case-insensitive match on the whole category string.
+      filter.category = { $regex: new RegExp(`^${escapeRegex(category.trim())}$`, "i") };
     }
 
     if (search && search.trim() !== "") {
-      const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const searchRegex = new RegExp(escapedSearch, "i");
+      const searchRegex = new RegExp(escapeRegex(search.trim()), "i");
       filter.$or = [
         { title: searchRegex },
         { location: searchRegex },
